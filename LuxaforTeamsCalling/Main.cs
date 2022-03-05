@@ -27,7 +27,7 @@ namespace LuxaforTeamsCalling
             Text = ProductName;
             labelText.Text = ProductName + Environment.NewLine +
                 "Version " + Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>().Version + Environment.NewLine + Environment.NewLine +
-                "Copyright (C) 2021-2022 Simon Mourier. All rights reserved.";
+                "Copyright (C) 2021-" + DateTime.Now.Year + " Simon Mourier. All rights reserved.";
 
             _eventHandler = new AutomationEventHandler(this);
 

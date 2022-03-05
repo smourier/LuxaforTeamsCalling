@@ -138,8 +138,11 @@ namespace LuxaforTeamsCalling
                                 }
 
                                 var path = GetDeviceInterfacePath(handle, ref idata);
-                                var iface = new DeviceInterface(iprops, path);
-                                device._interfaces.Add(iface);
+                                if (path != null)
+                                {
+                                    var iface = new DeviceInterface(iprops, path);
+                                    device._interfaces.Add(iface);
+                                }
                                 iindex++;
                             }
                         }
