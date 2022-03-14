@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -54,7 +55,10 @@ namespace LuxaforTeamsCalling
             }
 
             if (handle == INVALID_HANDLE_VALUE)
+            {
+                Debug.WriteLine("SetupDiGetClassDevsW failed:" + Marshal.GetLastWin32Error());
                 yield break;
+            }
 
             try
             {
@@ -68,11 +72,17 @@ namespace LuxaforTeamsCalling
                 {
                     SetupDiGetDevicePropertyKeys(handle, ref data, IntPtr.Zero, 0, out var count, 0);
                     if (count == 0)
+                    {
+                        Debug.WriteLine("SetupDiGetDevicePropertyKeys1 failed:" + Marshal.GetLastWin32Error());
                         continue;
+                    }
 
                     var pks = new DEVPROPKEY[count];
                     if (!SetupDiGetDevicePropertyKeys(handle, ref data, pks, pks.Length, out _, 0))
+                    {
+                        Debug.WriteLine("SetupDiGetDevicePropertyKeys2 failed:" + Marshal.GetLastWin32Error());
                         continue;
+                    }
 
                     var props = new Dictionary<DEVPROPKEY, object>();
                     foreach (var pk in pks)
@@ -122,11 +132,17 @@ namespace LuxaforTeamsCalling
                             {
                                 SetupDiGetDeviceInterfacePropertyKeys(handle, ref idata, IntPtr.Zero, 0, out count, 0);
                                 if (count == 0)
+                                {
+                                    Debug.WriteLine("SetupDiGetDeviceInterfacePropertyKey1 failed:" + Marshal.GetLastWin32Error());
                                     continue;
+                                }
 
                                 pks = new DEVPROPKEY[count];
                                 if (!SetupDiGetDeviceInterfacePropertyKeys(handle, ref idata, pks, pks.Length, out _, 0))
+                                {
+                                    Debug.WriteLine("SetupDiGetDeviceInterfacePropertyKey2 failed:" + Marshal.GetLastWin32Error());
                                     continue;
+                                }
 
                                 var iprops = new Dictionary<DEVPROPKEY, object>();
                                 foreach (var pk in pks)
@@ -696,14 +712,20 @@ namespace LuxaforTeamsCalling
         {
             SetupDiGetDeviceInterfaceDetailW(deviceInfoSet, ref deviceInterfaceData, IntPtr.Zero, 0, out var size, IntPtr.Zero);
             if (size == 0)
+            {
+                Debug.WriteLine("SetupDiGetDeviceInterfaceDetailW1 failed:" + Marshal.GetLastWin32Error());
                 return null;
+            }
 
             var ptr = Marshal.AllocCoTaskMem(size);
             try
             {
-                Marshal.WriteInt32(ptr, 8); // sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA W or A) = 8
-                if (!SetupDiGetDeviceInterfaceDetailW(deviceInfoSet, ref deviceInterfaceData, ptr, size, out var size2, IntPtr.Zero))
+                Marshal.WriteInt32(ptr, IntPtr.Size == 8 ? 8 : 6); // sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA W or A) = 8
+                if (!SetupDiGetDeviceInterfaceDetailW(deviceInfoSet, ref deviceInterfaceData, ptr, size, out _, IntPtr.Zero))
+                {
+                    Debug.WriteLine("SetupDiGetDeviceInterfaceDetailW2 failed:" + Marshal.GetLastWin32Error());
                     return null;
+                }
 
                 return Marshal.PtrToStringUni(ptr + 4);
             }
